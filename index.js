@@ -62,7 +62,7 @@ app.post('/login', async (req, res) => {
 
 // Upload movies
 const movieStorage = multer.diskStorage({
-    destination: "./moives",
+    destination: "./movies",
     filename: (req, file, cb) => {
         const newFileName = Date.now() + path.extname(file.originalname);
         cb(null, newFileName);    },
@@ -153,6 +153,28 @@ app.get('/films', async (req, res) => {
         console.error(error);
         res.status(500).json({ error: "Sever Error" });
     }
+});
+
+
+app.post('/accounts', async (req, res) => {
+    const { username } = req.body;
+
+    if (!username) {
+        return res.status(400).json({ error: "You need an username" });
+    }
+
+    try {
+        const result = await pool.query(
+            "SELECT * FROM accounts WHERE username ILIKE $1",
+            [`%${username}%`]
+        );
+
+        res.status(200).json({ message: "Searching Successful.", data: result.rows });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Sever Error" });
+    }
+
 });
 
 
