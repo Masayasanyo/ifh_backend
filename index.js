@@ -19,16 +19,16 @@ const pool = new Pool({
 });
 
 app.post('/signup', async (req, res) => {
-    const { username, email, password } = req.body;
-    if (!username || !email || !password) {
+    const { username, email, password, firstName, familyName } = req.body;
+    if (!username || !email || !password || !firstName || !familyName) {
         return res.status(400).json({ error: "Fill Everything" });
     }
     try {
         const saltRounds = 10;
         const hashedPassword = await bcrypt.hash(password, saltRounds);
         const result = await pool.query(
-            "INSERT INTO accounts (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id, username, email, created_at",
-            [username, email, hashedPassword]
+            "INSERT INTO accounts (username, email, password_hash, first_name, family_name) VALUES ($1, $2, $3, $4, $5) RETURNING id, username, email, first_name, family_name, created_at",
+            [username, email, hashedPassword, firstName, familyName]
         );
         res.status(201).json({ message: "Registration Successful.", user: result.rows[0] });
     } catch (error) {
@@ -52,7 +52,7 @@ app.post('/login', async (req, res) => {
         if (!passwordMatch) {
             return res.status(401).json({ error: "Email or Password are wrong." });
         }
-        res.json({ message: "Login Successful", user: { id: user.id, username: user.username, email: user.email } });
+        res.json({ message: "Login Successful", user: { id: user.id, username: user.username, email: user.email, firstName: user.first_name, familyName: user.family_name} });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Sever Error" });
@@ -112,19 +112,50 @@ app.post("/upload/thumbnail", thumbnailUpload.single("thumbnail"), (req, res) =>
     }
 });
 
-app.post('/upload', async (req, res) => {
-    const { userId, movieFilePath, trailerFilePath, thumbnailFilePath, title, description } = req.body;
+// app.post('/upload', async (req, res) => {
+//     const { userId, movieFilePath, trailerFilePath, thumbnailFilePath, title, description, genre, crew } = req.body;
 
-    if (!userId || !movieFilePath || !trailerFilePath || !thumbnailFilePath || !title || !description) {
+//     if (!userId || !movieFilePath || !trailerFilePath || !thumbnailFilePath || !title || !description || !genre || crew) {
+//         return res.status(400).json({ error: "Fill Everything" });
+//     }
+
+//     try {
+//         const result = await pool.query(
+//             "INSERT INTO films (user_id, movie_path, trailer_path, thumbnail_path, title, description, genre) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, user_id, movie_path, trailer_path, thumbnail_path, title, description, genre, created_at",
+//             [userId, movieFilePath, trailerFilePath, thumbnailFilePath, title, description, genre]
+//         );
+
+//         res.status(201).json({ message: "Upload Successful.", data: result.rows[0] });
+//     } catch (error) {
+//         console.error(error);
+//         res.status(500).json({ error: "Sever Error" });
+//     }
+
+// });
+
+app.post('/upload', async (req, res) => {
+    const { userId, movieFilePath, trailerFilePath, thumbnailFilePath, title, description, genre, crew } = req.body;
+
+    if (!userId || !movieFilePath || !trailerFilePath || !thumbnailFilePath || !title || !description || !genre || crew === null) {
         return res.status(400).json({ error: "Fill Everything" });
     }
 
     try {
         const result = await pool.query(
-            "INSERT INTO films (user_id, movie_path, trailer_path, thumbnail_path, title, description) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, user_id, movie_path, trailer_path, thumbnail_path, title, description, created_at",
-            [userId, movieFilePath, trailerFilePath, thumbnailFilePath, title, description]
+            "INSERT INTO films (user_id, movie_path, trailer_path, thumbnail_path, title, description, genre) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, user_id, movie_path, trailer_path, thumbnail_path, title, description, genre, created_at",
+            [userId, movieFilePath, trailerFilePath, thumbnailFilePath, title, description, genre]
         );
 
+        const filmId = result.rows[0].id;
+
+        if (crew.length > 0) {
+            await Promise.all(crew.map(async (member) => {
+                await pool.query(
+                    "INSERT INTO film_crew (film_id, crew_username, first_name, family_name, role, comment) VALUES ($1, $2, $3, $4, $5, $6)",
+                    [filmId, member.username || null, member.firstName, member.familyName, member.role, member.comment]
+                );
+            }));
+        }
         res.status(201).json({ message: "Upload Successful.", data: result.rows[0] });
     } catch (error) {
         console.error(error);
@@ -176,6 +207,29 @@ app.post('/accounts', async (req, res) => {
     }
 
 });
+
+
+app.post('/members', async (req, res) => {
+    const { filmId } = req.body;
+
+    if (!filmId) {
+        return res.status(400).json({ error: "You need a film id" });
+    }
+
+    try {
+        const result = await pool.query(
+            "SELECT * FROM film_crew WHERE film_id = $1",
+            [filmId]
+        );
+
+        res.status(200).json({ message: "Searching Successful.", data: result.rows });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Sever Error" });
+    }
+
+});
+
 
 
 const PORT = 3001;
