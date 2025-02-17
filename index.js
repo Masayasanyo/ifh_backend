@@ -18,6 +18,10 @@ const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
 });
 
+
+
+// Account
+
 app.post('/signup', async (req, res) => {
     const { username, email, password, firstName, familyName, imagePath } = req.body;
     if (!username || !email || !password || !firstName || !familyName) {
@@ -60,6 +64,8 @@ app.post('/login', async (req, res) => {
 
 });
 
+
+
 // Upload movies
 const movieStorage = multer.diskStorage({
     destination: "./movies",
@@ -76,7 +82,6 @@ app.post("/upload/movie", movieUpload.single("movie"), (req, res) => {
         return res.status(201).json({ message: 'Success!', filePath: `/movies/${req.file.filename}` }); 
     }
 });
-
 
 // Upload trailers
 const trailerStorage = multer.diskStorage({
@@ -129,27 +134,6 @@ app.post("/upload/profile_image", profileUpload.single("profile_image"), (req, r
     }
 });
 
-// app.post('/upload', async (req, res) => {
-//     const { userId, movieFilePath, trailerFilePath, thumbnailFilePath, title, description, genre, crew } = req.body;
-
-//     if (!userId || !movieFilePath || !trailerFilePath || !thumbnailFilePath || !title || !description || !genre || crew) {
-//         return res.status(400).json({ error: "Fill Everything" });
-//     }
-
-//     try {
-//         const result = await pool.query(
-//             "INSERT INTO films (user_id, movie_path, trailer_path, thumbnail_path, title, description, genre) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, user_id, movie_path, trailer_path, thumbnail_path, title, description, genre, created_at",
-//             [userId, movieFilePath, trailerFilePath, thumbnailFilePath, title, description, genre]
-//         );
-
-//         res.status(201).json({ message: "Upload Successful.", data: result.rows[0] });
-//     } catch (error) {
-//         console.error(error);
-//         res.status(500).json({ error: "Sever Error" });
-//     }
-
-// });
-
 app.post('/upload', async (req, res) => {
     const { userId, movieFilePath, trailerFilePath, thumbnailFilePath, title, description, genre, crew } = req.body;
 
@@ -168,8 +152,8 @@ app.post('/upload', async (req, res) => {
         if (crew.length > 0) {
             await Promise.all(crew.map(async (member) => {
                 await pool.query(
-                    "INSERT INTO film_crew (film_id, crew_username, first_name, family_name, role, comment) VALUES ($1, $2, $3, $4, $5, $6)",
-                    [filmId, member.username || null, member.firstName, member.familyName, member.role, member.comment]
+                    "INSERT INTO film_crew (film_id, first_name, family_name, role, comment, user_id) VALUES ($1, $2, $3, $4, $5, $6)",
+                    [filmId, member.firstName, member.familyName, member.role, member.comment, member.accountId || null,]
                 );
             }));
         }
@@ -198,7 +182,7 @@ app.get('/films', async (req, res) => {
         const result = await pool.query(
             "SELECT * FROM films;",
         );
-        res.status(201).json({ message: "Fetch Trailers Successful.", data: result.rows });
+        res.status(200).json({ message: "Fetch Trailers Successful.", data: result.rows });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Sever Error" });
@@ -234,12 +218,74 @@ app.get('/user/featured', async (req, res) => {
         const result = await pool.query(
             "SELECT * FROM accounts ORDER BY created_at DESC LIMIT 10;"
         );
-        res.status(200).json({ message: "Fetch Filmmakers Successful.", data: result.rows });
+        res.status(200).json({ message: "Successfully fetched Filmmakers.", data: result.rows });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Server Error" });
     }
 });
+
+
+app.post('/user/work', async (req, res) => {
+    const { userId } = req.body;
+
+    if (!userId) {
+        return res.status(400).json({ error: "You need a user id" });
+    }
+
+    try {
+        const result = await pool.query(
+            `SELECT
+                f.id AS film_id,
+                f.title,
+                f.description,
+                f.genre,
+                f.trailer_path,
+                f.movie_path,
+                f.thumbnail_path,
+                f.created_at
+            FROM
+                film_crew fc
+            JOIN
+                films f ON fc.film_id = f.id
+            WHERE
+                fc.user_id = $1;
+            `,
+            [userId]
+        );
+
+        res.status(200).json({ message: "Successfully fetched user's job.", data: result.rows });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Sever Error" });
+    }
+
+});
+
+
+
+app.post('/film/data', async (req, res) => {
+    const { filmId } = req.body;
+
+    if (!filmId) {
+        return res.status(400).json({ error: "You need a film id" });
+    }
+
+    try {
+        const result = await pool.query(
+            "SELECT * FROM films WHERE id = $1",
+            [filmId]
+        );
+
+        res.status(200).json({ message: "Successfull", data: result.rows });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Sever Error" });
+    }
+
+});
+
+
 
 app.post('/accounts', async (req, res) => {
     const { username } = req.body;
@@ -272,7 +318,18 @@ app.post('/members', async (req, res) => {
 
     try {
         const result = await pool.query(
-            "SELECT * FROM film_crew WHERE film_id = $1",
+            `SELECT fc.id AS film_crew_id, fc.film_id,
+            COALESCE(a.username, fc.crew_username) AS username,
+            COALESCE(a.first_name, fc.first_name) AS first_name,
+            COALESCE(a.family_name, fc.family_name) AS family_name,
+            fc.role,
+            fc.created_at AS film_crew_created_at,
+            fc.comment,
+            fc.user_id,
+            a.id AS account_id,
+            a.email,
+            a.profile_image_url,
+            a.created_at AS account_created_at FROM film_crew fc LEFT JOIN accounts a ON fc.user_id = a.id WHERE fc.film_id = $1;`,
             [filmId]
         );
 
@@ -283,6 +340,7 @@ app.post('/members', async (req, res) => {
     }
 
 });
+
 
 app.post('/films/like/initial', async (req, res) => {
     const { userId, filmId } = req.body;
@@ -330,18 +388,6 @@ app.post('/films/dislike', async (req, res) => {
         res.status(500).json({ error: "Server Error" });
     }
 });
-
-// app.post('/films/like/count', async (req, res) => {
-//     const { filmId } = req.params;
-
-//     try {
-//         const result = await pool.query("SELECT COUNT(*) FROM likes WHERE film_id = $1;", [filmId]);
-//         res.status(200).json({ likes: result.rows[0].count });
-//     } catch (error) {
-//         console.error(error);
-//         res.status(500).json({ error: "Server Error" });
-//     }
-// });
 
 
 
