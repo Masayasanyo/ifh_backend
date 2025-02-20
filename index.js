@@ -10,6 +10,8 @@ import uploadRoutes from "./routes/upload.js";
 import filmsRoutes from "./routes/films.js";
 import usersRoutes from "./routes/users.js";
 import likesRoutes from "./routes/likes.js";
+import saveRoutes from "./routes/save.js";
+
 
 dotenv.config();
 
@@ -26,6 +28,8 @@ app.use("/upload", uploadRoutes);
 app.use("/films", filmsRoutes);
 app.use("/users", usersRoutes);
 app.use("/likes", likesRoutes);
+app.use("/save", saveRoutes);
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

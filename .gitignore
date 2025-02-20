@@ -2,3 +2,4 @@ movies/
 thumbnails/
 trailers/
 profile_image/
+.env

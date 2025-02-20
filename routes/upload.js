@@ -6,16 +6,16 @@ import { pool } from "../index.js";
 const router = express.Router();
 
 router.post('/', async (req, res) => {
-    const { userId, filmFilePath, trailerFilePath, thumbnailFilePath, title, description, genre, crew } = req.body;
+    const { userId, filmFilePath, trailerFilePath, thumbnailFilePath, title, description, genre, crew, duration } = req.body;
 
-    if (!userId || !filmFilePath || !trailerFilePath || !thumbnailFilePath || !title || !description || !genre || crew === null) {
+    if (!userId || !filmFilePath || !trailerFilePath || !thumbnailFilePath || !title || !description || !genre || crew === null || duration === null) {
         return res.status(400).json({ error: "Fill Everything" });
     }
 
     try {
         const result = await pool.query(
-            "INSERT INTO films (user_id, film_file_path, trailer_file_path, thumbnail_file_path, title, description, genre) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, user_id, film_file_path, trailer_file_path, thumbnail_file_path, title, description, genre, created_at",
-            [userId, filmFilePath, trailerFilePath, thumbnailFilePath, title, description, genre]
+            "INSERT INTO films (user_id, film_file_path, trailer_file_path, thumbnail_file_path, title, description, genre, duration) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, user_id, film_file_path, trailer_file_path, thumbnail_file_path, title, description, genre, duration, created_at",
+            [userId, filmFilePath, trailerFilePath, thumbnailFilePath, title, description, genre, duration]
         );
 
         const filmId = result.rows[0].id;
