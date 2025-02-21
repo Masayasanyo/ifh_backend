@@ -137,7 +137,86 @@ router.post('/watchlist', async (req, res) => {
         console.error(error);
         res.status(500).json({ error: "Sever Error" });
     }
+});
+
+router.post('/genre', async (req, res) => {
+    const { genre } = req.body;
+
+    if (!genre) {
+        return res.status(400).json({ error: "You need a film genre" });
+    }
+
+    try {
+        const result = await pool.query(
+            "SELECT * FROM films WHERE genre = $1",
+            [genre]
+        );
+
+        res.status(200).json({ message: "Successfull", data: result.rows });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Sever Error" });
+    }
 
 });
+
+router.post('/title', async (req, res) => {
+    const { filmName } = req.body;
+
+    if (!filmName) {
+        return res.status(400).json({ error: "You need a film name" });
+    }
+
+    const title = `%${filmName}%`;
+
+    try {
+        const result = await pool.query(
+            "SELECT * FROM films WHERE title ILIKE $1",
+            [title]
+        );
+
+        res.status(200).json({ message: "Successfull", data: result.rows });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Sever Error" });
+    }
+
+});
+
+router.get('/schedule', async (req, res) => {
+
+    try {
+        const result = await pool.query(
+            `SELECT 
+                f.id AS film_id,
+                f.title,
+                f.description,
+                f.genre,
+                f.trailer_file_path,
+                f.film_file_path,
+                f.thumbnail_file_path,
+                f.created_at, 
+                f.duration, 
+                s.date
+            FROM
+                showtimes s 
+            JOIN 
+                films f ON s.film_id = f.id 
+            WHERE 
+                s.date >= CURRENT_DATE
+            ORDER BY 
+                s.date 
+            LIMIT 16;
+            `,
+        );
+
+        res.status(200).json({ message: "Successfull", data: result.rows });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Sever Error" });
+    }
+
+});
+
 
 export default router;

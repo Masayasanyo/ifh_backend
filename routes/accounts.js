@@ -80,12 +80,69 @@ router.post('/login', async (req, res) => {
         if (!passwordMatch) {
             return res.status(401).json({ error: "Email or Password are wrong." });
         }
-        res.json({ message: "Login Successful", user: { id: user.id, username: user.username, email: user.email, firstName: user.first_name, familyName: user.family_name, imagePath: user.profile_image_url} });
+        res.json({ message: "Login Successful", user: { id: user.id, username: user.username, email: user.email, first_name: user.first_name, family_name: user.family_name, profile_image_url: user.profile_image_url} });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Sever Error" });
     }
 
 });
+
+
+router.post('/update', async (req, res) => {
+    const { userId, username, email, password, firstName, familyName, imagePath } = req.body;
+
+    console.log(req.body);
+
+
+    if (!userId || !username || !email || !firstName || !familyName) {
+        return res.status(400).json({ error: "Fill Everything" });
+    }
+
+    if (password) {
+        try {
+            const saltRounds = 10;
+            const hashedPassword = await bcrypt.hash(password, saltRounds);
+            const result = await pool.query(
+                `UPDATE accounts 
+                SET username = $1, 
+                    email = $2, 
+                    password_hash = $3, 
+                    first_name = $4, 
+                    family_name = $5, 
+                    profile_image_url = $6 
+                WHERE id = $7 
+                RETURNING id, username, email, first_name, family_name, profile_image_url, created_at
+                `,
+                [username, email, hashedPassword, firstName, familyName, imagePath, userId]
+            );
+            res.status(200).json({ message: "Registration Successful.", data: result.rows[0] });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ error: "Sever Error" });
+        }
+    }
+    else {
+        try {
+            const result = await pool.query(
+                `UPDATE accounts 
+                SET username = $1, 
+                    email = $2, 
+                    first_name = $3, 
+                    family_name = $4, 
+                    profile_image_url = $5 
+                WHERE id = $6 
+                RETURNING id, username, email, first_name, family_name, profile_image_url, created_at
+                `,
+                [username, email, firstName, familyName, imagePath, userId]
+            );
+            res.status(200).json({ message: "Registration Successful.", data: result.rows[0] });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ error: "Sever Error" });
+        }
+    }
+});
+
 
 export default router;
