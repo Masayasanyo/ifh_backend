@@ -11,6 +11,7 @@ import filmsRoutes from "./routes/films.js";
 import usersRoutes from "./routes/users.js";
 import likesRoutes from "./routes/likes.js";
 import saveRoutes from "./routes/save.js";
+import ticketsRoutes from "./routes/tickets.js";
 
 
 dotenv.config();
@@ -29,6 +30,7 @@ app.use("/films", filmsRoutes);
 app.use("/users", usersRoutes);
 app.use("/likes", likesRoutes);
 app.use("/save", saveRoutes);
+app.use("/tickets", ticketsRoutes);
 
 
 const __filename = fileURLToPath(import.meta.url);
