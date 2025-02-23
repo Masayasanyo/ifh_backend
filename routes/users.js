@@ -15,7 +15,7 @@ router.get('/featured', async (req, res) => {
             ORDER BY 
                 created_at 
             DESC 
-            LIMIT 12;
+            LIMIT 10;
             `
         );
         res.status(200).json({ message: "Fetched filmmakers successfully", data: result.rows });

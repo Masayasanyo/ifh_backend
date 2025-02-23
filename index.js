@@ -12,6 +12,8 @@ import usersRoutes from "./routes/users.js";
 import likesRoutes from "./routes/likes.js";
 import saveRoutes from "./routes/save.js";
 import ticketsRoutes from "./routes/tickets.js";
+import historyRoutes from "./routes/history.js";
+
 
 
 dotenv.config();
@@ -31,6 +33,8 @@ app.use("/users", usersRoutes);
 app.use("/likes", likesRoutes);
 app.use("/save", saveRoutes);
 app.use("/tickets", ticketsRoutes);
+app.use("/history", historyRoutes);
+
 
 
 const __filename = fileURLToPath(import.meta.url);
