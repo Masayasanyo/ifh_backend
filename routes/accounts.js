@@ -47,7 +47,7 @@ router.post('/data', async (req, res) => {
 });
 
 router.post('/signup', async (req, res) => {
-    const { username, email, password, firstName, familyName, imagePath } = req.body;
+    const { username, email, password, firstName, familyName, bio, imagePath } = req.body;
     if (!username || !email || !password || !firstName || !familyName) {
         return res.status(400).json({ error: "Fill Everything" });
     }
@@ -55,10 +55,10 @@ router.post('/signup', async (req, res) => {
         const saltRounds = 10;
         const hashedPassword = await bcrypt.hash(password, saltRounds);
         const result = await pool.query(
-            "INSERT INTO accounts (username, email, password_hash, first_name, family_name, profile_image_url) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, username, email, first_name, family_name, profile_image_url, created_at",
-            [username, email, hashedPassword, firstName, familyName, imagePath]
+            "INSERT INTO accounts (username, email, password_hash, first_name, family_name, bio, profile_image_url) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, username, email, first_name, family_name, bio, profile_image_url, created_at",
+            [username, email, hashedPassword, firstName, familyName, bio, imagePath]
         );
-        res.status(201).json({ message: "Registration Successful.", user: result.rows[0] });
+        res.status(201).json({ message: "Registration Successful.", data: result.rows[0] });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Sever Error" });
@@ -80,7 +80,7 @@ router.post('/login', async (req, res) => {
         if (!passwordMatch) {
             return res.status(401).json({ error: "Email or Password are wrong." });
         }
-        res.json({ message: "Login Successful", user: { id: user.id, username: user.username, email: user.email, first_name: user.first_name, family_name: user.family_name, profile_image_url: user.profile_image_url} });
+        res.status(200).json({ message: "Login Successful", data: result.rows[0] });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Sever Error" });
@@ -90,7 +90,7 @@ router.post('/login', async (req, res) => {
 
 
 router.post('/update', async (req, res) => {
-    const { userId, username, email, password, firstName, familyName, imagePath } = req.body;
+    const { userId, username, email, password, firstName, familyName, bio, imagePath } = req.body;
 
     console.log(req.body);
 
@@ -110,13 +110,14 @@ router.post('/update', async (req, res) => {
                     password_hash = $3, 
                     first_name = $4, 
                     family_name = $5, 
-                    profile_image_url = $6 
-                WHERE id = $7 
-                RETURNING id, username, email, first_name, family_name, profile_image_url, created_at
+                    profile_image_url = $6, 
+                    bio = $7
+                WHERE id = $8 
+                RETURNING id, username, email, first_name, family_name, profile_image_url, bio, created_at
                 `,
-                [username, email, hashedPassword, firstName, familyName, imagePath, userId]
+                [username, email, hashedPassword, firstName, familyName, imagePath, bio, userId]
             );
-            res.status(200).json({ message: "Registration Successful.", data: result.rows[0] });
+            res.status(201).json({ message: "Registration Successful.", data: result.rows[0] });
         } catch (error) {
             console.error(error);
             res.status(500).json({ error: "Sever Error" });
@@ -130,13 +131,14 @@ router.post('/update', async (req, res) => {
                     email = $2, 
                     first_name = $3, 
                     family_name = $4, 
-                    profile_image_url = $5 
-                WHERE id = $6 
-                RETURNING id, username, email, first_name, family_name, profile_image_url, created_at
+                    profile_image_url = $5, 
+                    bio = $6 
+                WHERE id = $7  
+                RETURNING id, username, email, first_name, family_name, profile_image_url, bio, created_at
                 `,
-                [username, email, firstName, familyName, imagePath, userId]
+                [username, email, firstName, familyName, imagePath, bio, userId]
             );
-            res.status(200).json({ message: "Registration Successful.", data: result.rows[0] });
+            res.status(201).json({ message: "Registration Successful.", data: result.rows[0] });
         } catch (error) {
             console.error(error);
             res.status(500).json({ error: "Sever Error" });

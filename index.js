@@ -13,10 +13,15 @@ import likesRoutes from "./routes/likes.js";
 import saveRoutes from "./routes/save.js";
 import ticketsRoutes from "./routes/tickets.js";
 import historyRoutes from "./routes/history.js";
+import { createClient } from '@supabase/supabase-js'
 
 
 
 dotenv.config();
+
+// const supabaseUrl = 'https://naqmkwjhhvqinuugvdth.supabase.co'
+// const supabaseKey = process.env.SUPABASE_KEY
+// const supabase = createClient(supabaseUrl, supabaseKey)
 
 const { Pool } = pkg;
 const pool = new Pool({
@@ -48,9 +53,12 @@ app.use('/storage/thumbnails', express.static(THUMBNAIL_DIR));
 const PROFILE_DIR = path.join(__dirname, '/storage/profile_images');
 app.use('/storage/profile_images', express.static(PROFILE_DIR));
 
+// export { supabase };
+
 export { pool };
 
+
 const PORT = 3001;
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server: ${PORT}`);
 });
