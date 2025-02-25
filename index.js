@@ -19,14 +19,15 @@ import { createClient } from '@supabase/supabase-js'
 
 dotenv.config();
 
-// const supabaseUrl = 'https://naqmkwjhhvqinuugvdth.supabase.co'
-// const supabaseKey = process.env.SUPABASE_KEY
+const supabaseUrl = 'https://naqmkwjhhvqinuugvdth.supabase.co'
+const supabaseKey = process.env.SUPABASE_KEY
 // const supabase = createClient(supabaseUrl, supabaseKey)
+const pool = createClient(supabaseUrl, supabaseKey)
 
-const { Pool } = pkg;
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-});
+// const { Pool } = pkg;
+// const pool = new Pool({
+//     connectionString: process.env.DATABASE_URL,
+// });
 
 const app = express();
 app.use(cors());
@@ -58,7 +59,7 @@ app.use('/storage/profile_images', express.static(PROFILE_DIR));
 export { pool };
 
 
-const PORT = 3001;
-app.listen(PORT, '0.0.0.0', () => {
+const PORT = process.env.PORT;
+app.listen(PORT, () => {
     console.log(`Server: ${PORT}`);
 });
