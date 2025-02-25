@@ -213,10 +213,32 @@ router.get('/schedule', async (req, res) => {
         res.status(200).json({ message: "Successfull", data: result.rows });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ error: "Sever Error" });
+        res.status(500).json({ error: "Server Error" });
     }
 
 });
+
+router.delete('/delete', async (req, res) => {
+
+    const { filmId } = req.body;
+
+    console.log(filmId);
+
+    try{
+        const result = await pool.query(
+            `DELETE FROM
+                films
+            WHERE 
+                id = $1;
+            `, 
+            [filmId]
+        );
+        res.status(200).json({ message: "Success", data: result.rows });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Server error"});
+    }
+})
 
 
 export default router;
