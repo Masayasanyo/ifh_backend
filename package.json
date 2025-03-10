@@ -4,7 +4,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1", 
+    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js"
   },
   "keywords": [],
@@ -14,6 +14,7 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.48.1",
     "bcryptjs": "^2.4.3",
+    "clamscan": "^2.4.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",

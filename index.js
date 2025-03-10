@@ -13,21 +13,19 @@ import likesRoutes from "./routes/likes.js";
 import saveRoutes from "./routes/save.js";
 import ticketsRoutes from "./routes/tickets.js";
 import historyRoutes from "./routes/history.js";
+import adminRoutes from "./routes/admin.js";
 import { createClient } from '@supabase/supabase-js'
-
-
 
 dotenv.config();
 
-const supabaseUrl = 'https://naqmkwjhhvqinuugvdth.supabase.co'
-const supabaseKey = process.env.SUPABASE_KEY
+// const supabaseUrl = 'https://naqmkwjhhvqinuugvdth.supabase.co'
+// const supabaseKey = process.env.SUPABASE_KEY
 // const supabase = createClient(supabaseUrl, supabaseKey)
-const pool = createClient(supabaseUrl, supabaseKey)
 
-// const { Pool } = pkg;
-// const pool = new Pool({
-//     connectionString: process.env.DATABASE_URL,
-// });
+const { Pool } = pkg;
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL, 
+});
 
 const app = express();
 app.use(cors());
@@ -40,6 +38,7 @@ app.use("/likes", likesRoutes);
 app.use("/save", saveRoutes);
 app.use("/tickets", ticketsRoutes);
 app.use("/history", historyRoutes);
+app.use("/admin", adminRoutes);
 
 
 
@@ -57,7 +56,6 @@ app.use('/storage/profile_images', express.static(PROFILE_DIR));
 // export { supabase };
 
 export { pool };
-
 
 const PORT = process.env.PORT;
 app.listen(PORT, () => {

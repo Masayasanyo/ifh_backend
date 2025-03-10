@@ -22,7 +22,6 @@ router.post('/', async (req, res) => {
         console.error(error);
         res.status(500).json({ error: "Sever Error" });
     }
-
 });
 
 router.post('/data', async (req, res) => {
